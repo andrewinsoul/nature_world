@@ -1,0 +1,35 @@
+<div class="min-h-screen bg-zinc-950 text-white">
+  <h1 class="text-center text-5xl pt-12 font-bold">
+    Nature World
+  </h1>
+
+  <p class="text-center mt-3">
+    Tick {@world.tick}
+  </p>
+
+  <div class="
+      relative
+      mx-auto
+      mt-16
+      w-[900px]
+      h-[700px]
+      border
+      border-zinc-800
+      rounded-xl
+      overflow-hidden
+    ">
+    <%= for citizen <- @world.citizens do %>
+      <div
+        class="
+          absolute
+          w-4
+          h-4
+          rounded-full
+          bg-emerald-400
+        "
+        style={"left: #{citizen.x}px; top: #{citizen.y}px;"}
+      >
+      </div>
+    <% end %>
+  </div>
+</div>
