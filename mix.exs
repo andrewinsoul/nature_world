@@ -41,7 +41,6 @@ defmodule NatureWorld.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.8.3"},
-      {:phoenix_ecto, "~> 4.5"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.1.0"},
