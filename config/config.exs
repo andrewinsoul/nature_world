@@ -8,7 +8,6 @@
 import Config
 
 config :nature_world,
-  ecto_repos: [NatureWorld.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configure the endpoint

@@ -9,7 +9,6 @@ defmodule NatureWorld.Application do
   def start(_type, _args) do
     children = [
       NatureWorldWeb.Telemetry,
-      NatureWorld.Repo,
       {DNSCluster, query: Application.get_env(:nature_world, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: NatureWorld.PubSub},
       {Registry, keys: :unique, name: NatureWorld.Registry},
