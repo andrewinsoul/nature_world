@@ -17,9 +17,15 @@ defmodule NatureWorld.Simulation do
 
   @impl true
   def init(_) do
+    Phoenix.PubSub.subscribe(
+      NatureWorld.PubSub,
+      "events"
+    )
+
     state = %{
       tick: 0,
-      citizens: spawn_citizens()
+      citizens: spawn_citizens(),
+      messages: []
     }
 
     schedule_tick()
@@ -28,34 +34,44 @@ defmodule NatureWorld.Simulation do
   end
 
   @impl true
-  def handle_call(:snapshot, _from, state) do
-    snapshot = %{
-      tick: state.tick,
-      citizens: Enum.map(state.citizens, &NatureWorld.Citizen.state/1)
+  def handle_info({:message_sent, message}, state) do
+    state = %{
+      state
+      | messages: [message | state.messages]
     }
 
-    {:reply, snapshot, state}
+    {:noreply, state}
   end
 
   @impl true
   def handle_info(:tick, state) do
     state =
-      Map.update!(state, :tick, &(&1 + 1))
-
-    snapshot = %{
-      tick: state.tick,
-      citizens: Enum.map(state.citizens, &NatureWorld.Citizen.state/1)
-    }
+      state
+      |> Map.update!(:tick, &(&1 + 1))
+      |> expire_messages()
 
     Phoenix.PubSub.broadcast(
       NatureWorld.PubSub,
       "simulation",
-      {:tick, snapshot}
+      {:tick, snapshot(state)}
     )
 
     schedule_tick()
 
     {:noreply, state}
+  end
+
+  defp snapshot(state) do
+    %{
+      tick: state.tick,
+      citizens: Enum.map(state.citizens, &NatureWorld.Citizen.state/1),
+      messages: state.messages
+    }
+  end
+
+  @impl true
+  def handle_call(:snapshot, _from, state) do
+    {:reply, snapshot(state), state}
   end
 
   defp schedule_tick do
@@ -73,5 +89,20 @@ defmodule NatureWorld.Simulation do
 
       pid
     end
+  end
+
+  defp expire_messages(state) do
+    now = System.monotonic_time()
+
+    messages =
+      Enum.filter(state.messages, fn message ->
+        System.convert_time_unit(
+          now - message.started_at,
+          :native,
+          :millisecond
+        ) < 1000
+      end)
+
+    %{state | messages: messages}
   end
 end

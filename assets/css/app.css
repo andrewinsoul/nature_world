@@ -100,6 +100,122 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 /* Make LiveView wrapper divs transparent for layout */
-[data-phx-session], [data-phx-teleported-src] { display: contents }
+[data-phx-session],
+[data-phx-teleported-src] {
+  display: contents;
+}
+
+/* Nature World styles */
+
+.world-background {
+  background: radial-gradient(
+    circle at top,
+    #0f172a 0%,
+    #050505 55%,
+    #000000 100%
+  );
+}
+
+.hero-title {
+  background: linear-gradient(90deg, #ffffff, #d1fae5, #67e8f9, #ffffff);
+
+  background-size: 300%;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  color: transparent;
+
+  animation: shimmer 8s linear infinite;
+
+  text-shadow: 0 0 40px rgba(16, 185, 129, 0.25);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 0%;
+  }
+
+  to {
+    background-position: 300%;
+  }
+}
+
+.citizen {
+  animation: citizen-breathe 2.5s ease-in-out infinite;
+}
+
+@keyframes citizen-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.world-stage {
+  position: relative;
+  overflow: hidden;
+
+  border-radius: 32px;
+
+  background: radial-gradient(
+    circle at center,
+    rgba(16, 185, 129, 0.05),
+    rgba(0, 0, 0, 0.18)
+  );
+
+  backdrop-filter: blur(18px);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 40px 80px rgba(0, 0, 0, 0.45);
+
+  isolation: isolate;
+}
+
+.world-grid {
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+
+  background-size: 60px 60px;
+
+  mask-image: radial-gradient(circle, black 55%, transparent);
+
+  pointer-events: none;
+}
+
+.world-vignette {
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  background: radial-gradient(circle, transparent 45%, rgba(0, 0, 0, 0.55));
+}
+
+.citizen-glow {
+  animation: glow-breathe 3s ease-in-out infinite;
+}
+
+@keyframes glow-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+}
 
 /* This file is for your main application CSS */

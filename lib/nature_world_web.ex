@@ -86,6 +86,8 @@ defmodule NatureWorldWeb do
       import Phoenix.HTML
       # Core UI components
       import NatureWorldWeb.CoreComponents
+      import NatureWorldWeb.WorldComponents
+      import NatureWorldWeb.DashboardComponents
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

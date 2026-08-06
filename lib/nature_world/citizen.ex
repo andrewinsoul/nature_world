@@ -12,7 +12,11 @@ defmodule NatureWorld.Citizen do
   ## Client
 
   def start_link(attrs) do
-    GenServer.start_link(__MODULE__, attrs)
+    GenServer.start_link(
+      __MODULE__,
+      attrs,
+      name: via(attrs.id)
+    )
   end
 
   def state(pid) do
@@ -42,13 +46,60 @@ defmodule NatureWorld.Citizen do
   end
 
   @impl true
+  def handle_cast({:greet, from}, citizen) do
+    citizen =
+      %{citizen | state: :excited}
+
+    Phoenix.PubSub.broadcast(
+      NatureWorld.PubSub,
+      "events",
+      {:message_sent,
+       %NatureWorld.Message{
+         id: System.unique_integer([:positive]),
+         from: from,
+         to: citizen.id,
+         started_at: System.monotonic_time()
+       }}
+    )
+
+    Process.send_after(self(), :calm_down, 400)
+
+    {:noreply, citizen}
+  end
+
+  @impl true
   def handle_info(:tick, citizen) do
     citizen = wander(citizen)
-    maybe_wave(citizen)
+    maybe_greet(citizen)
 
     schedule_tick()
 
     {:noreply, citizen}
+  end
+
+  @impl true
+  def handle_info(:calm_down, citizen) do
+    citizen =
+      %{citizen | state: :idle}
+
+    {:noreply, citizen}
+  end
+
+  def lookup(id) do
+    case Registry.lookup(NatureWorld.Registry, id) do
+      [{pid, _}] -> {:ok, pid}
+      [] -> :error
+    end
+  end
+
+  def greet(target_id, from_id) do
+    case lookup(target_id) do
+      {:ok, pid} ->
+        GenServer.cast(pid, {:greet, from_id})
+
+      :error ->
+        :ok
+    end
   end
 
   defp schedule_tick do
@@ -78,9 +129,18 @@ defmodule NatureWorld.Citizen do
     GenServer.call(pid, :id)
   end
 
-  defp maybe_wave(citizen) do
+  defp maybe_greet(citizen) do
     if :rand.uniform() < 0.03 do
-      IO.puts("#{citizen.id} says hello 👋")
+      target =
+        Enum.random(1..50)
+
+      if target != citizen.id do
+        greet(target, citizen.id)
+      end
     end
+  end
+
+  defp via(id) do
+    {:via, Registry, {NatureWorld.Registry, id}}
   end
 end

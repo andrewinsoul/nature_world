@@ -12,7 +12,21 @@ defmodule NatureWorldWeb.AtlasLive do
 
     {:ok,
      assign(socket,
-       world: NatureWorld.Simulation.state()
+       world: NatureWorld.Simulation.state(),
+       last_event: nil,
+       selected_citizen_id: nil
+     )}
+  end
+
+  @impl true
+  def handle_event("select-citizen", %{"id" => id}, socket) do
+    # citizen =
+    #   socket.assigns.world.citizens
+    #   |> Enum.find(&(&1.id == String.to_integer(id)))
+
+    {:noreply,
+     assign(socket,
+       selected_citizen_id: String.to_integer(id)
      )}
   end
 

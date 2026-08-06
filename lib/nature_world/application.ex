@@ -12,6 +12,7 @@ defmodule NatureWorld.Application do
       NatureWorld.Repo,
       {DNSCluster, query: Application.get_env(:nature_world, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: NatureWorld.PubSub},
+      {Registry, keys: :unique, name: NatureWorld.Registry},
       NatureWorld.CitizenSupervisor,
       NatureWorld.Simulation,
       # Start a worker by calling: NatureWorld.Worker.start_link(arg)
