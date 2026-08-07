@@ -175,7 +175,7 @@ Ultimately I'd love Nature World to become an educational playground for underst
 ## Running Locally
 
 ```bash
-git clone https://github.com/<your-username>/nature_world.git
+git clone https://github.com/andrewinsoul/nature_world.git
 
 cd nature_world
 
