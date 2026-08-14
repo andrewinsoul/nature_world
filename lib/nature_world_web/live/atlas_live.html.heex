@@ -62,6 +62,38 @@
       ">
         
 <!-- Simulation -->
+<div>
+<%= if is_nil(@selected_citizen_id) do %>
+            <div class="
+              mb-3
+              flex
+              items-center
+              justify-center
+              gap-2
+              text-sm
+              text-zinc-400
+            ">
+              <span class="
+                inline-flex
+                h-6
+                w-6
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-zinc-700
+                bg-zinc-900/60
+                text-xs
+                text-zinc-300
+              ">
+                ↖
+              </span>
+
+              <span>
+                Click a citizen to explore its process
+              </span>
+            </div>
+          <% end %>
         <div class="
     world-stage
     relative
@@ -94,6 +126,8 @@
             />
           <% end %>
         </div>
+
+</div>
         
 <!-- Inspector -->
         <div class="mt-8 lg:mt-0">
