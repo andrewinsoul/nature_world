@@ -35,24 +35,35 @@ Hooks.MessageParticle = {
     const toX = Number(this.el.dataset.toX)
     const toY = Number(this.el.dataset.toY)
 
-    this.el.style.left = `${fromX + 8}px`
-    this.el.style.top = `${fromY + 8}px`
+    const angle =
+      Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI
+
+    const fromLeft = (fromX / 880) * 100
+    const fromTop = (fromY / 680) * 100
+
+    const toLeft = (toX / 880) * 100
+    const toTop = (toY / 680) * 100
 
     this.el.animate(
       [
         {
-          transform: "translate(0px,0px)"
+          left: `${fromLeft}%`,
+          top: `${fromTop}%`
         },
         {
-          transform: `translate(${toX - fromX}px, ${toY - fromY}px)`
+          left: `${toLeft}%`,
+          top: `${toTop}%`
         }
       ],
       {
-        duration: 500,
+        duration: 650,
         easing: "ease-in-out",
         fill: "forwards"
       }
     )
+
+    this.el.style.transform =
+      `translate(-50%, -50%) rotate(${angle}deg)`
   }
 }
 
@@ -110,4 +121,3 @@ if (process.env.NODE_ENV === "development") {
     window.liveReloader = reloader
   })
 }
-

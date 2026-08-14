@@ -1,14 +1,15 @@
-<% selected_citizen =
-  Enum.find(
-    @world.citizens,
-    &(&1.id == @selected_citizen_id)
-  ) %>
+<Layouts.app flash={@flash}>
+  <% selected_citizen =
+    Enum.find(
+      @world.citizens,
+      &(&1.id == @selected_citizen_id)
+    ) %>
 
-<div class="world-background relative min-h-screen overflow-hidden text-white">
-  
+  <div class="world-background relative min-h-screen overflow-hidden text-white">
+    
 <!-- Ambient Background -->
-  <div class="absolute inset-0 pointer-events-none overflow-hidden">
-    <div class="
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="
         absolute
         -top-32
         left-1/3
@@ -19,9 +20,9 @@
         blur-[180px]
         animate-pulse
       ">
-    </div>
+      </div>
 
-    <div class="
+      <div class="
         absolute
         bottom-0
         right-0
@@ -31,27 +32,27 @@
         bg-cyan-500/5
         blur-[200px]
       ">
+      </div>
     </div>
-  </div>
-  
+    
 <!-- Main Content -->
-  <div class="relative z-10">
-    
+    <div class="relative z-10">
+      
 <!-- Hero -->
-    <div class="pt-12 text-center">
-      <h1 class="hero-title text-6xl font-black tracking-tight">
-        Nature World
-      </h1>
+      <div class="pt-6 text-center">
+        <h1 class="hero-title text-5xl font-black tracking-tight sm:text-6xl">
+          Nature World
+        </h1>
 
-      <p class="mt-5 text-lg text-zinc-400">
-        A Living Visualization of the BEAM Runtime
-      </p>
-    </div>
-    
+        <p class="mt-5 text-lg text-zinc-400">
+          A Living Visualization of the BEAM Runtime
+        </p>
+      </div>
+      
 <!-- World -->
-    <div class="
+      <div class="
         mx-auto
-        mt-16
+        mt-8
         max-w-7xl
         px-6
         lg:grid
@@ -59,44 +60,54 @@
         lg:gap-10
         items-start
       ">
-      
+        
 <!-- Simulation -->
-      <div class="
+        <div class="
     world-stage
     relative
-    h-[60vh]
-    min-h-[500px]
-    lg:h-[720px]
+    h-[52vh]
+    min-h-[380px]
+    max-h-[680px]
+    lg:h-[calc(100vh-210px)]
     w-full
   ">
-        <div class="world-grid"></div>
+          <div class="world-grid"></div>
 
-        <div class="world-vignette"></div>
-        
+          <div class="world-vignette"></div>
+          
 <!-- Citizens -->
-        <%= for citizen <- @world.citizens do %>
-          <.citizen
-            citizen={citizen}
-            selected={citizen.id == @selected_citizen_id}
-          />
-        <% end %>
-        
+          <%= for citizen <- @world.citizens do %>
+            <.citizen
+              citizen={citizen}
+              selected={citizen.id == @selected_citizen_id}
+              highlighted={
+                Enum.any?(@world.messages, &(&1.from == citizen.id or &1.to == citizen.id))
+              }
+            />
+          <% end %>
+          
 <!-- Messages -->
-        <%= for message <- @world.messages do %>
-          <.message
-            message={message}
-            citizens={@world.citizens}
-          />
-        <% end %>
-      </div>
-      
+          <%= for message <- @world.messages do %>
+            <.message
+              message={message}
+              citizens={@world.citizens}
+            />
+          <% end %>
+        </div>
+        
 <!-- Inspector -->
-      <div class="mt-8 lg:mt-0">
-        <.dashboard
-          world={@world}
-          citizen={selected_citizen}
-        />
+        <div class="mt-8 lg:mt-0">
+          <.dashboard
+            world={@world}
+            citizen={selected_citizen}
+            message_form={@message_form}
+            selected_citizen_id={@selected_citizen_id}
+            recipient_options={recipient_options(@world.citizens, @selected_citizen_id)}
+            education_event={@education_event}
+            beam_lab_topic={@beam_lab_topic}
+          />
+        </div>
       </div>
     </div>
   </div>
-</div>
+</Layouts.app>

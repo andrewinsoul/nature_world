@@ -3,6 +3,8 @@ defmodule NatureWorld.Citizen do
 
   defstruct [
     :id,
+    :pid,
+    :generation,
     :x,
     :y,
     energy: 100,
@@ -27,10 +29,29 @@ defmodule NatureWorld.Citizen do
 
   @impl true
   def init(attrs) do
+    generation = NatureWorld.CitizenSupervisor.record_start(attrs.id)
+
     citizen =
-      struct(__MODULE__, attrs)
+      attrs
+      |> Map.put(:pid, self())
+      |> Map.put(:generation, generation)
+      |> then(&struct(__MODULE__, &1))
+
+    NatureWorld.CitizenSupervisor.put_position(
+      citizen.id,
+      citizen.x,
+      citizen.y
+    )
 
     schedule_tick()
+
+    if generation > 1 do
+      Phoenix.PubSub.broadcast(
+        NatureWorld.PubSub,
+        "events",
+        {:citizen_restarted, citizen.id, generation}
+      )
+    end
 
     {:ok, citizen}
   end
@@ -70,7 +91,6 @@ defmodule NatureWorld.Citizen do
   @impl true
   def handle_info(:tick, citizen) do
     citizen = wander(citizen)
-    maybe_greet(citizen)
 
     schedule_tick()
 
@@ -102,6 +122,17 @@ defmodule NatureWorld.Citizen do
     end
   end
 
+  def crash(id) do
+    case lookup(id) do
+      {:ok, pid} ->
+        Phoenix.PubSub.broadcast(NatureWorld.PubSub, "events", {:citizen_crashed, id})
+        GenServer.stop(pid, :crashed)
+
+      :error ->
+        :ok
+    end
+  end
+
   defp schedule_tick do
     Process.send_after(
       self(),
@@ -114,9 +145,45 @@ defmodule NatureWorld.Citizen do
     dx = Enum.random(-3..3)
     dy = Enum.random(-3..3)
 
-    citizen
-    |> Map.update!(:x, &clamp(&1 + dx, 0, 880))
-    |> Map.update!(:y, &clamp(&1 + dy, 0, 680))
+    proposed = %{
+      x: clamp(citizen.x + dx, 0, 880),
+      y: clamp(citizen.y + dy, 0, 680)
+    }
+
+    if valid_position?(citizen.id, proposed) do
+      NatureWorld.CitizenSupervisor.put_position(
+        citizen.id,
+        proposed.x,
+        proposed.y
+      )
+
+      %{citizen | x: proposed.x, y: proposed.y}
+    else
+      citizen
+    end
+  end
+
+  @impl true
+  def terminate(_reason, citizen) do
+    NatureWorld.CitizenSupervisor.delete_position(citizen.id)
+    :ok
+  end
+
+  defp valid_position?(citizen_id, %{x: x, y: y}) do
+    NatureWorld.CitizenSupervisor.positions()
+    |> Enum.all?(fn {other_id, other_x, other_y} ->
+      if other_id == citizen_id do
+        true
+      else
+        distance =
+          :math.sqrt(
+            :math.pow(x - other_x, 2) +
+              :math.pow(y - other_y, 2)
+          )
+
+        distance >= 100
+      end
+    end)
   end
 
   defp clamp(value, min, max) do
@@ -127,17 +194,6 @@ defmodule NatureWorld.Citizen do
 
   def id(pid) do
     GenServer.call(pid, :id)
-  end
-
-  defp maybe_greet(citizen) do
-    if :rand.uniform() < 0.03 do
-      target =
-        Enum.random(1..50)
-
-      if target != citizen.id do
-        greet(target, citizen.id)
-      end
-    end
   end
 
   defp via(id) do
