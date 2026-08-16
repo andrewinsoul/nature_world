@@ -31,39 +31,42 @@ Hooks.MessageParticle = {
   mounted() {
     const fromX = Number(this.el.dataset.fromX)
     const fromY = Number(this.el.dataset.fromY)
-
     const toX = Number(this.el.dataset.toX)
     const toY = Number(this.el.dataset.toY)
 
-    const angle =
-      Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI
+    const arrow = this.el.querySelector(".message-arrow")
 
-    const fromLeft = (fromX / 880) * 100
-    const fromTop = (fromY / 680) * 100
+    if (!arrow) return
 
-    const toLeft = (toX / 880) * 100
-    const toTop = (toY / 680) * 100
+    const duration = 1000
+    const start = performance.now()
 
-    this.el.animate(
-      [
-        {
-          left: `${fromLeft}%`,
-          top: `${fromTop}%`
-        },
-        {
-          left: `${toLeft}%`,
-          top: `${toTop}%`
-        }
-      ],
-      {
-        duration: 650,
-        easing: "ease-in-out",
-        fill: "forwards"
+    const animate = (now) => {
+      const progress = Math.min((now - start) / duration, 1)
+
+      const eased =
+        progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2
+
+      const x = fromX + (toX - fromX) * eased
+      const y = fromY + (toY - fromY) * eased
+
+      const angle =
+        Math.atan2(toY - fromY, toX - fromX) *
+        (180 / Math.PI)
+
+      arrow.setAttribute(
+        "transform",
+        `translate(${x} ${y}) rotate(${angle})`
+      )
+
+      if (progress < 1) {
+        requestAnimationFrame(animate)
       }
-    )
+    }
 
-    this.el.style.transform =
-      `translate(-50%, -50%) rotate(${angle}deg)`
+    requestAnimationFrame(animate)
   }
 }
 

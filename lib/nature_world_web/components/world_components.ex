@@ -72,73 +72,82 @@ defmodule NatureWorldWeb.WorldComponents do
       Enum.find(assigns.citizens, &(&1.id == assigns.message.to))
 
     if from == nil or to == nil do
-      assigns = assign(assigns, :render, false)
-
       ~H"""
       """
     else
       assigns =
         assigns
-        |> assign(:render, true)
         |> assign(:from, from)
         |> assign(:to, to)
-        |> assign(
-          :distance,
-          :math.sqrt(:math.pow(to.x - from.x, 2) + :math.pow(to.y - from.y, 2))
-        )
         |> assign(
           :angle,
           :math.atan2(to.y - from.y, to.x - from.x) * 180 / :math.pi()
         )
 
       ~H"""
-      <%= if @render do %>
-        <div
-          id={"message-#{@message.id}"}
-          class="absolute inset-0 pointer-events-none z-[999]"
+      <div
+        id={"message-#{@message.id}"}
+        class="absolute inset-0 pointer-events-none z-[999]"
+        phx-hook="MessageParticle"
+        phx-update="ignore"
+        data-from-x={@from.x}
+        data-from-y={@from.y}
+        data-to-x={@to.x}
+        data-to-y={@to.y}
+      >
+        <svg
+          class="absolute inset-0 h-full w-full overflow-visible"
+          viewBox="0 0 900 700"
+          preserveAspectRatio="none"
         >
-          <!-- Message line -->
-          <div
-            class="absolute h-px bg-emerald-300/70 shadow-[0_0_12px_rgba(110,231,183,0.8)]"
-            style={
-              "left: #{@from.x / 880 * 100}%;
-               top: #{@from.y / 680 * 100}%;
-               width: #{@distance / 880 * 100}%;
-               transform: rotate(#{@angle}deg);
-               transform-origin: left center;"
-            }
-          >
-          </div>
+          <!-- Message path -->
+          <line
+            x1={@from.x}
+            y1={@from.y}
+            x2={@to.x}
+            y2={@to.y}
+            stroke="rgba(110, 231, 183, 0.55)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-dasharray="5 7"
+            filter={"url(#message-glow-#{@message.id})"}
+          />
+          
+      <!-- Glow definition -->
+          <defs>
+            <filter
+              id={"message-glow-#{@message.id}"}
+              x="-100%"
+              y="-100%"
+              width="300%"
+              height="300%"
+            >
+              <feGaussianBlur
+                stdDeviation="3"
+                result="blur"
+              />
+
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           
       <!-- Animated arrowhead -->
-          <div
+          <g
             id={"message-arrow-#{@message.id}"}
-            phx-hook="MessageParticle"
-            phx-update="ignore"
-            data-from-x={@from.x}
-            data-from-y={@from.y}
-            data-to-x={@to.x}
-            data-to-y={@to.y}
-            class="
-              absolute
-              w-0
-              h-0
-              border-y-[4px]
-              border-y-transparent
-              border-l-[8px]
-              border-l-emerald-200
-              drop-shadow-[0_0_8px_rgba(110,231,183,0.95)]
-            "
-            style={
-              "left: #{@from.x / 880 * 100}%;
-               top: #{@from.y / 680 * 100}%;
-               transform: translate(-50%, -50%) rotate(#{@angle}deg);
-               transform-origin: center;"
-            }
+            class="message-arrow"
+            transform={"translate(#{@from.x} #{@from.y}) rotate(#{@angle})"}
           >
-          </div>
-        </div>
-      <% end %>
+            <path
+              d="M -10 -6 L 4 0 L -10 6 L -6 0 Z"
+              fill="#a7f3d0"
+              filter={"url(#message-glow-#{@message.id})"}
+            />
+          </g>
+        </svg>
+      </div>
       """
     end
   end
