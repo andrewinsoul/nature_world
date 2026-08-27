@@ -137,7 +137,7 @@ defmodule NatureWorld.Citizen do
     Process.send_after(
       self(),
       :tick,
-      Enum.random(200..450)
+      Enum.random(800..1500)
     )
   end
 

@@ -119,42 +119,19 @@
 .hero-title {
   background: linear-gradient(90deg, #ffffff, #d1fae5, #67e8f9, #ffffff);
 
-  background-size: 300%;
-
   -webkit-background-clip: text;
   background-clip: text;
 
   color: transparent;
 
-  animation: shimmer 8s linear infinite;
-
   text-shadow: 0 0 40px rgba(16, 185, 129, 0.25);
 }
 
-@keyframes shimmer {
-  from {
-    background-position: 0%;
-  }
-
-  to {
-    background-position: 300%;
-  }
-}
-
 .citizen {
-  animation: citizen-breathe 2.5s ease-in-out infinite;
-  will-change: transform, opacity, filter;
-}
-
-@keyframes citizen-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.12);
-  }
+  transition:
+    transform 180ms ease-out,
+    opacity 180ms ease-out,
+    filter 180ms ease-out;
 }
 
 .citizen-message-highlight {
@@ -242,20 +219,10 @@
 }
 
 .citizen-glow {
-  animation: glow-breathe 3s ease-in-out infinite;
-}
-
-@keyframes glow-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.65;
-  }
-
-  50% {
-    transform: scale(1.35);
-    opacity: 1;
-  }
+  transition:
+    transform 180ms ease-out,
+    opacity 180ms ease-out,
+    filter 180ms ease-out;
 }
 
 /* This file is for your main application CSS */

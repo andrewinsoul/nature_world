@@ -18,7 +18,7 @@ defmodule NatureWorldWeb.WorldComponents do
       style={"left: #{Float.round(@citizen.x / 880 * 100, 2)}%; top: #{Float.round(@citizen.y / 680 * 100, 2)}%;"}
     >
       <div class={[
-        "absolute -left-5 -top-5 h-14 w-14 rounded-full blur-xl transition-all duration-500 citizen-glow",
+        "absolute -left-5 -top-5 h-14 w-14 rounded-full blur-xl transition-opacity duration-500 citizen-glow",
         @citizen.state == :excited &&
           "bg-yellow-400/35 scale-125",
         @citizen.state != :excited &&

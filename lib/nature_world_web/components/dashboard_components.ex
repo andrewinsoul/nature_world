@@ -9,6 +9,7 @@ defmodule NatureWorldWeb.DashboardComponents do
   attr :recipient_options, :list, default: []
   attr :selected_citizen_id, :any, default: nil
   attr :education_event, :map, default: nil
+  attr :tutorial, :map, default: nil
   attr :beam_lab_topic, :atom, default: :message_passing
 
   def dashboard(assigns) do
@@ -49,6 +50,72 @@ defmodule NatureWorldWeb.DashboardComponents do
           <span>{@world.supervisor.restart_count}</span>
         </div>
       </div>
+
+      <%= if @tutorial do %>
+        <div
+          id="guided-tutorial"
+          data-step={@tutorial.step}
+          class={[
+            "mt-5 rounded-2xl border p-4",
+            @tutorial.step == :complete &&
+              "border-emerald-400/20 bg-emerald-400/10",
+            @tutorial.step != :complete &&
+              "border-sky-400/20 bg-sky-400/10"
+          ]}
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-[11px] uppercase tracking-[0.35em] text-sky-300/80">
+                Guided Tutorial
+              </div>
+
+              <div class="mt-1 text-sm text-zinc-400">
+                Step {@tutorial.step_index} of {@tutorial.total_steps}
+              </div>
+            </div>
+
+            <div class="h-2.5 w-2.5 rounded-full bg-sky-300 shadow-[0_0_18px_rgba(125,211,252,0.9)]"></div>
+          </div>
+
+          <div class="mt-3 text-lg font-semibold text-white">
+            {@tutorial.title}
+          </div>
+
+          <p class="mt-2 text-sm leading-6 text-zinc-200">
+            {@tutorial.body}
+          </p>
+
+          <p class="mt-3 text-sm text-sky-200/90">
+            {@tutorial.guidance}
+          </p>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button
+              id="guided-tutorial-next"
+              type="button"
+              phx-click={@tutorial.action_event}
+              class={[
+                "btn btn-sm",
+                @tutorial.step == :complete && "btn-success",
+                @tutorial.step != :complete && "btn-info"
+              ]}
+            >
+              {@tutorial.action_label}
+            </button>
+
+            <%= if @tutorial.secondary_label && @tutorial.secondary_event do %>
+              <button
+                id="guided-tutorial-skip"
+                type="button"
+                phx-click={@tutorial.secondary_event}
+                class="btn btn-sm btn-ghost text-zinc-200"
+              >
+                {@tutorial.secondary_label}
+              </button>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
 
       <%= if @citizen do %>
         <div class="mt-5 rounded-2xl border border-white/5 bg-black/20 p-4">

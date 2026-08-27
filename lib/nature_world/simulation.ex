@@ -1,7 +1,7 @@
 defmodule NatureWorld.Simulation do
   use GenServer
 
-  @tick_rate 250
+  @tick_rate 1000
 
   ## Client
 

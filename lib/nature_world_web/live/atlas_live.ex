@@ -20,7 +20,8 @@ defmodule NatureWorldWeb.AtlasLive do
        message_recipient_id: message_recipient_id,
        message_form: message_form(message_recipient_id),
        beam_lab_topic: :message_passing,
-       education_event: nil
+       education_event: nil,
+       tutorial: tutorial(:welcome)
      )}
   end
 
@@ -35,12 +36,15 @@ defmodule NatureWorldWeb.AtlasLive do
         socket.assigns.message_recipient_id
       )
 
-    {:noreply,
-     assign(socket,
-       selected_citizen_id: selected_citizen_id,
-       message_recipient_id: message_recipient_id,
-       message_form: message_form(message_recipient_id)
-     )}
+    socket =
+      assign(socket,
+        selected_citizen_id: selected_citizen_id,
+        message_recipient_id: message_recipient_id,
+        message_form: message_form(message_recipient_id)
+      )
+      |> maybe_advance_tutorial(:welcome)
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -59,9 +63,11 @@ defmodule NatureWorldWeb.AtlasLive do
   def handle_event("send-message", %{"message" => %{"recipient_id" => recipient_id}}, socket) do
     selected_id = socket.assigns.selected_citizen_id
     recipient_id = parse_id(recipient_id)
+    message_sent? =
+      selected_id != nil and recipient_id != nil and recipient_id != selected_id
 
     socket =
-      if selected_id && recipient_id && recipient_id != selected_id do
+      if message_sent? do
         NatureWorld.Citizen.greet(recipient_id, selected_id)
 
         show_education(socket, %{
@@ -73,12 +79,21 @@ defmodule NatureWorldWeb.AtlasLive do
         socket
       end
 
-    {:noreply,
-     assign(socket,
-       message_recipient_id: recipient_id,
-       message_form: message_form(recipient_id),
-       beam_lab_topic: :message_passing
-     )}
+    socket =
+      assign(socket,
+        message_recipient_id: recipient_id,
+        message_form: message_form(recipient_id),
+        beam_lab_topic: :message_passing
+      )
+
+    socket =
+      if message_sent? do
+        maybe_advance_tutorial(socket, :message_passing)
+      else
+        socket
+      end
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -90,10 +105,13 @@ defmodule NatureWorldWeb.AtlasLive do
       id ->
         NatureWorld.Citizen.crash(id)
 
-        {:noreply,
-         socket
-         |> assign(beam_lab_topic: :supervision)
-         |> show_education(%{kind: :crash, citizen: id})}
+        socket =
+          socket
+          |> assign(beam_lab_topic: :supervision)
+          |> show_education(%{kind: :crash, citizen: id})
+          |> maybe_complete_tutorial()
+
+        {:noreply, socket}
     end
   end
 
@@ -107,11 +125,24 @@ defmodule NatureWorldWeb.AtlasLive do
         id = citizens |> Enum.random() |> Map.fetch!(:id)
         NatureWorld.Citizen.crash(id)
 
-        {:noreply,
-         socket
-         |> assign(beam_lab_topic: :fault_tolerance)
-         |> show_education(%{kind: :crash, citizen: id})}
+        socket =
+          socket
+          |> assign(beam_lab_topic: :fault_tolerance)
+          |> show_education(%{kind: :crash, citizen: id})
+          |> maybe_complete_tutorial()
+
+        {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_event("tutorial-next", _params, socket) do
+    {:noreply, advance_tutorial(socket)}
+  end
+
+  @impl true
+  def handle_event("dismiss-tutorial", _params, socket) do
+    {:noreply, assign(socket, tutorial: nil)}
   end
 
   @impl true
@@ -143,10 +174,66 @@ defmodule NatureWorldWeb.AtlasLive do
 
   def handle_info({:clear_education, _ref}, socket), do: {:noreply, socket}
 
+  @impl true
+  def handle_info({:clear_tutorial, ref}, %{assigns: %{tutorial: %{ref: ref}}} = socket) do
+    {:noreply, assign(socket, tutorial: nil)}
+  end
+
+  def handle_info({:clear_tutorial, _ref}, socket), do: {:noreply, socket}
+
   defp show_education(socket, event) do
     ref = make_ref()
     Process.send_after(self(), {:clear_education, ref}, 4500)
     assign(socket, education_event: Map.put(event, :ref, ref))
+  end
+
+  defp maybe_advance_tutorial(socket, step) do
+    case socket.assigns.tutorial do
+      %{step: ^step} ->
+        advance_tutorial(socket)
+
+      _ ->
+        socket
+    end
+  end
+
+  defp maybe_complete_tutorial(socket) do
+    case socket.assigns.tutorial do
+      %{step: :message_passing} ->
+        assign(socket, tutorial: tutorial(:supervision))
+
+      %{step: :supervision} ->
+        complete_tutorial(socket)
+
+      _ ->
+        socket
+    end
+  end
+
+  defp advance_tutorial(socket) do
+    case socket.assigns.tutorial do
+      %{step: :welcome} ->
+        assign(socket, tutorial: tutorial(:message_passing))
+
+      %{step: :message_passing} ->
+        assign(socket, tutorial: tutorial(:supervision))
+
+      %{step: :supervision} ->
+        complete_tutorial(socket)
+
+      %{step: :complete} ->
+        assign(socket, tutorial: nil)
+
+      _ ->
+        socket
+    end
+  end
+
+  defp complete_tutorial(socket) do
+    ref = make_ref()
+    Process.send_after(self(), {:clear_tutorial, ref}, 5000)
+
+    assign(socket, tutorial: Map.put(tutorial(:complete), :ref, ref))
   end
 
   def recipient_options(citizens, selected_citizen_id) do
@@ -201,4 +288,68 @@ defmodule NatureWorldWeb.AtlasLive do
   defp lab_topic("supervision"), do: :supervision
   defp lab_topic("fault_tolerance"), do: :fault_tolerance
   defp lab_topic(_), do: :message_passing
+
+  defp tutorial(:welcome) do
+    %{
+      step: :welcome,
+      step_index: 1,
+      total_steps: 3,
+      title: "Welcome to Nature World",
+      body:
+        "Start by clicking any citizen. Each citizen is a real Elixir process with its own state.",
+      guidance: "Click a citizen to inspect its process state.",
+      action_label: "Next tip",
+      action_event: "tutorial-next",
+      secondary_label: "Skip tutorial",
+      secondary_event: "dismiss-tutorial"
+    }
+  end
+
+  defp tutorial(:message_passing) do
+    %{
+      step: :message_passing,
+      step_index: 2,
+      total_steps: 3,
+      title: "Message Passing",
+      body:
+        "Send a message from the selected citizen to watch asynchronous communication in action.",
+      guidance: "Pick a recipient and send a message.",
+      action_label: "Next tip",
+      action_event: "tutorial-next",
+      secondary_label: "Skip tutorial",
+      secondary_event: "dismiss-tutorial"
+    }
+  end
+
+  defp tutorial(:supervision) do
+    %{
+      step: :supervision,
+      step_index: 3,
+      total_steps: 3,
+      title: "Supervision",
+      body:
+        "Crash a citizen to see the supervisor restart it while the rest of the world keeps running.",
+      guidance: "Try crashing the selected citizen or a random one.",
+      action_label: "Show me the finish",
+      action_event: "tutorial-next",
+      secondary_label: "Skip tutorial",
+      secondary_event: "dismiss-tutorial"
+    }
+  end
+
+  defp tutorial(:complete) do
+    %{
+      step: :complete,
+      step_index: 3,
+      total_steps: 3,
+      title: "You're ready to explore",
+      body:
+        "You've seen selection, message passing, and supervision. Keep experimenting with the world.",
+      guidance: "The tutorial will close automatically in a moment.",
+      action_label: "Continue exploring",
+      action_event: "dismiss-tutorial",
+      secondary_label: nil,
+      secondary_event: nil
+    }
+  end
 end

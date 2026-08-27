@@ -18,7 +18,6 @@
         rounded-full
         bg-emerald-500/10
         blur-[180px]
-        animate-pulse
       ">
       </div>
 
@@ -63,7 +62,32 @@
         
 <!-- Simulation -->
 <div>
-<%= if is_nil(@selected_citizen_id) do %>
+<%= cond do %>
+  <% @tutorial -> %>
+            <div class="
+              mb-3
+              flex
+              items-center
+              justify-center
+              gap-3
+              rounded-2xl
+              border
+              border-sky-400/15
+              bg-sky-400/10
+              px-4
+              py-3
+              text-sm
+              text-sky-100
+            ">
+              <span class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-300/40 bg-sky-300/10 text-xs font-semibold text-sky-200">
+                {@tutorial.step_index}
+              </span>
+
+              <span>
+                {@tutorial.guidance}
+              </span>
+            </div>
+  <% is_nil(@selected_citizen_id) -> %>
             <div class="
               mb-3
               flex
@@ -93,7 +117,7 @@
                 Click a citizen to explore its process
               </span>
             </div>
-          <% end %>
+<% end %>
         <div class="
     world-stage
     relative
@@ -138,6 +162,7 @@
             selected_citizen_id={@selected_citizen_id}
             recipient_options={recipient_options(@world.citizens, @selected_citizen_id)}
             education_event={@education_event}
+            tutorial={@tutorial}
             beam_lab_topic={@beam_lab_topic}
           />
         </div>
