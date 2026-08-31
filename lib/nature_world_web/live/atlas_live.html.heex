@@ -62,8 +62,7 @@
         
 <!-- Simulation -->
 <div>
-<%= cond do %>
-  <% @tutorial -> %>
+<%= if @tutorial do %>
             <div class="
               mb-3
               flex
@@ -87,7 +86,8 @@
                 {@tutorial.guidance}
               </span>
             </div>
-  <% is_nil(@selected_citizen_id) -> %>
+<% else %>
+  <%= if is_nil(@selected_citizen_id) do %>
             <div class="
               mb-3
               flex
@@ -117,6 +117,7 @@
                 Click a citizen to explore its process
               </span>
             </div>
+  <% end %>
 <% end %>
         <div class="
     world-stage

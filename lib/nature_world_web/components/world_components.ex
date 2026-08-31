@@ -13,12 +13,17 @@ defmodule NatureWorldWeb.WorldComponents do
       assign(assigns, :depth, depth)
 
     ~H"""
-    <div
-      class="absolute"
+    <button
+      type="button"
+      id={"citizen-#{@citizen.id}-#{@citizen.generation}"}
+      phx-click="select-citizen"
+      phx-value-id={@citizen.id}
+      aria-label={"Select citizen #{@citizen.id}"}
+      class="absolute h-14 w-14 cursor-pointer border-0 bg-transparent p-0 text-left"
       style={"left: #{Float.round(@citizen.x / 880 * 100, 2)}%; top: #{Float.round(@citizen.y / 680 * 100, 2)}%;"}
     >
       <div class={[
-        "absolute -left-5 -top-5 h-14 w-14 rounded-full blur-xl transition-opacity duration-500 citizen-glow",
+        "absolute inset-0 rounded-full blur-xl transition-opacity duration-500 citizen-glow pointer-events-none",
         @citizen.state == :excited &&
           "bg-yellow-400/35 scale-125",
         @citizen.state != :excited &&
@@ -26,11 +31,8 @@ defmodule NatureWorldWeb.WorldComponents do
       ]}>
       </div>
       <div
-        id={"citizen-#{@citizen.id}-#{@citizen.generation}"}
-        phx-click="select-citizen"
-        phx-value-id={@citizen.id}
         class={[
-          "rounded-full transition-all duration-300 cursor-pointer citizen",
+          "absolute left-5 top-5 rounded-full transition-all duration-300 citizen pointer-events-none",
           @depth == 0 && "opacity-100",
           @depth == 1 && "opacity-75",
           @depth == 2 && "opacity-50",
@@ -57,7 +59,7 @@ defmodule NatureWorldWeb.WorldComponents do
         ]}
       >
       </div>
-    </div>
+    </button>
     """
   end
 

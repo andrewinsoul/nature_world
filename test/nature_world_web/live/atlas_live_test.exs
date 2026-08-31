@@ -20,4 +20,20 @@ defmodule NatureWorldWeb.AtlasLiveTest do
 
     refute has_element?(view, "#guided-tutorial")
   end
+
+  test "citizen clicks still work after the tutorial auto-clears", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    render_click(element(view, "#guided-tutorial-next"))
+    render_click(element(view, "#guided-tutorial-next"))
+    render_click(element(view, "#guided-tutorial-next"))
+
+    state = :sys.get_state(view.pid)
+    send(view.pid, {:clear_tutorial, state.socket.assigns.tutorial.ref})
+    _ = :sys.get_state(view.pid)
+
+    render_click(element(view, "#citizen-1-1"))
+
+    assert has_element?(view, "#citizen-1-1")
+  end
 end
