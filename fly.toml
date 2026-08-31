@@ -2,7 +2,7 @@ app = "nature-world"
 primary_region = "ams"
 
 [http_service]
-  internal_port = 8000
+  internal_port = 4000
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
