@@ -10,7 +10,9 @@ defmodule NatureWorldWeb.WorldComponents do
       rem(assigns.citizen.id, 3)
 
     assigns =
-      assign(assigns, :depth, depth)
+      assigns
+      |> assign(:depth, depth)
+      |> assign(:mailbox_count, length(Map.get(assigns.citizen, :mailbox, [])))
 
     ~H"""
     <div
@@ -22,7 +24,7 @@ defmodule NatureWorldWeb.WorldComponents do
         @citizen.state == :excited &&
           "bg-yellow-400/35 scale-125",
         @citizen.state != :excited &&
-          "bg-emerald-400/10"
+          if(@citizen.node == :remote, do: "bg-cyan-400/15", else: "bg-emerald-400/10")
       ]}>
       </div>
       <div
@@ -44,7 +46,8 @@ defmodule NatureWorldWeb.WorldComponents do
           @citizen.state != :excited &&
             [
               "w-4 h-4",
-              "bg-emerald-400"
+              @citizen.node == :remote && "bg-cyan-400",
+              @citizen.node != :remote && "bg-emerald-400"
             ],
           @selected &&
             [
@@ -56,6 +59,11 @@ defmodule NatureWorldWeb.WorldComponents do
           @citizen.generation > 1 && "citizen-restarted"
         ]}
       >
+        <%= if @mailbox_count > 0 do %>
+          <div class="absolute -right-1 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-sky-300/40 bg-sky-300/15 px-1 text-[10px] font-semibold text-sky-100 shadow-[0_0_18px_rgba(125,211,252,0.55)]">
+            {@mailbox_count}
+          </div>
+        <% end %>
       </div>
     </div>
     """

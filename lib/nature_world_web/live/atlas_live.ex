@@ -151,6 +151,96 @@ defmodule NatureWorldWeb.AtlasLive do
   end
 
   @impl true
+  def handle_event("simulation-toggle-pause", _params, socket) do
+    paused? = NatureWorld.Simulation.toggle_pause()
+
+    socket =
+      socket
+      |> refresh_world()
+      |> show_education(%{
+        kind: :pause,
+        action: if(paused?, do: "paused", else: "resumed")
+      })
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("simulation-faster", _params, socket) do
+    tick_interval_ms = NatureWorld.Simulation.faster()
+
+    socket =
+      socket
+      |> refresh_world()
+      |> show_education(%{
+        kind: :pause,
+        action: "sped up to #{tick_interval_ms}ms"
+      })
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("simulation-slower", _params, socket) do
+    tick_interval_ms = NatureWorld.Simulation.slower()
+
+    socket =
+      socket
+      |> refresh_world()
+      |> show_education(%{
+        kind: :pause,
+        action: "slowed down to #{tick_interval_ms}ms"
+      })
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("spawn-citizen", _params, socket) do
+    {:ok, id} = NatureWorld.Simulation.spawn_citizen()
+
+    socket =
+      socket
+      |> refresh_world()
+      |> show_education(%{
+        kind: :spawn,
+        citizen: id
+      })
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("toggle-partition", _params, socket) do
+    partitioned? = NatureWorld.Simulation.toggle_partition()
+
+    socket =
+      socket
+      |> refresh_world()
+      |> show_education(%{
+        kind: :partition,
+        status: if(partitioned?, do: "partitioned", else: "connected")
+      })
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("tutorial-replay", _params, socket) do
+    socket =
+      socket
+      |> assign(
+        tutorial: tutorial(:welcome),
+        beam_lab_topic: :message_passing
+      )
+      |> show_education(%{
+        kind: :tutorial
+      })
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:tick, state}, socket) do
     message_recipient_id =
       default_recipient_id(
@@ -185,6 +275,23 @@ defmodule NatureWorldWeb.AtlasLive do
     ref = make_ref()
     Process.send_after(self(), {:clear_education, ref}, 4500)
     assign(socket, education_event: Map.put(event, :ref, ref))
+  end
+
+  defp refresh_world(socket) do
+    world = NatureWorld.Simulation.state()
+
+    message_recipient_id =
+      default_recipient_id(
+        world.citizens,
+        socket.assigns.selected_citizen_id,
+        socket.assigns.message_recipient_id
+      )
+
+    assign(socket,
+      world: world,
+      message_recipient_id: message_recipient_id,
+      message_form: message_form(message_recipient_id)
+    )
   end
 
   defp maybe_advance_tutorial(socket, step) do
