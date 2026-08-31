@@ -5,8 +5,10 @@ defmodule NatureWorld.Citizen do
     :id,
     :pid,
     :generation,
+    :node,
     :x,
     :y,
+    mailbox: [],
     energy: 100,
     state: :idle
   ]
@@ -30,9 +32,11 @@ defmodule NatureWorld.Citizen do
   @impl true
   def init(attrs) do
     generation = NatureWorld.CitizenSupervisor.record_start(attrs.id)
+    node = Map.get(attrs, :node, :local)
 
     citizen =
       attrs
+      |> Map.put(:node, node)
       |> Map.put(:pid, self())
       |> Map.put(:generation, generation)
       |> then(&struct(__MODULE__, &1))
@@ -68,21 +72,29 @@ defmodule NatureWorld.Citizen do
 
   @impl true
   def handle_cast({:greet, from}, citizen) do
+    citizen = ensure_mailbox(citizen)
+
+    message = %NatureWorld.Message{
+      id: System.unique_integer([:positive]),
+      from: from,
+      to: citizen.id,
+      started_at: System.monotonic_time()
+    }
+
     citizen =
-      %{citizen | state: :excited}
+      %{
+        citizen
+        | state: :excited,
+          mailbox: [message | mailbox(citizen)] |> Enum.take(5)
+      }
 
     Phoenix.PubSub.broadcast(
       NatureWorld.PubSub,
       "events",
-      {:message_sent,
-       %NatureWorld.Message{
-         id: System.unique_integer([:positive]),
-         from: from,
-         to: citizen.id,
-         started_at: System.monotonic_time()
-       }}
+      {:message_sent, message}
     )
 
+    Process.send_after(self(), {:release_mailbox_message, message.id}, 2500)
     Process.send_after(self(), :calm_down, 400)
 
     {:noreply, citizen}
@@ -99,10 +111,23 @@ defmodule NatureWorld.Citizen do
 
   @impl true
   def handle_info(:calm_down, citizen) do
+    citizen = ensure_mailbox(citizen)
+
     citizen =
       %{citizen | state: :idle}
 
     {:noreply, citizen}
+  end
+
+  @impl true
+  def handle_info({:release_mailbox_message, message_id}, citizen) do
+    citizen = ensure_mailbox(citizen)
+
+    mailbox =
+      mailbox(citizen)
+      |> Enum.reject(&(&1.id == message_id))
+
+    {:noreply, %{citizen | mailbox: mailbox}}
   end
 
   def lookup(id) do
@@ -198,5 +223,13 @@ defmodule NatureWorld.Citizen do
 
   defp via(id) do
     {:via, Registry, {NatureWorld.Registry, id}}
+  end
+
+  defp mailbox(citizen) do
+    Map.get(citizen, :mailbox, [])
+  end
+
+  defp ensure_mailbox(citizen) do
+    Map.put_new(citizen, :mailbox, [])
   end
 end

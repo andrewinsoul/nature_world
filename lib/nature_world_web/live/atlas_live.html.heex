@@ -6,8 +6,6 @@
     ) %>
 
   <div class="world-background relative min-h-screen overflow-hidden text-white">
-    
-<!-- Ambient Background -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden">
       <div class="
         absolute
@@ -33,11 +31,8 @@
       ">
       </div>
     </div>
-    
-<!-- Main Content -->
-    <div class="relative z-10">
-      
-<!-- Hero -->
+
+    <div class="relative z-10 mx-auto max-w-[1600px] px-6 pb-16">
       <div class="pt-6 text-center">
         <h1 class="hero-title text-5xl font-black tracking-tight sm:text-6xl">
           Nature World
@@ -47,125 +42,220 @@
           A Living Visualization of the BEAM Runtime
         </p>
       </div>
-      
-<!-- World -->
-      <div class="
-        mx-auto
-        mt-8
-        max-w-7xl
-        px-6
-        lg:grid
-        lg:grid-cols-[1fr_360px]
-        lg:gap-10
-        items-start
-      ">
-        
-<!-- Simulation -->
-<div>
-<%= cond do %>
-  <% @tutorial -> %>
-            <div class="
-              mb-3
-              flex
-              items-center
-              justify-center
-              gap-3
-              rounded-2xl
-              border
-              border-sky-400/15
-              bg-sky-400/10
-              px-4
-              py-3
-              text-sm
-              text-sky-100
-            ">
-              <span class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-300/40 bg-sky-300/10 text-xs font-semibold text-sky-200">
-                {@tutorial.step_index}
-              </span>
 
-              <span>
-                {@tutorial.guidance}
-              </span>
+      <div class="mt-8">
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
+          <div class="relative">
+            <div class="world-stage relative h-[56vh] min-h-[420px] max-h-[760px] w-full overflow-hidden rounded-[32px]">
+              <div class="world-grid"></div>
+
+              <div class="world-vignette"></div>
+
+              <%= if @tutorial do %>
+                <div class="absolute left-4 top-4 z-20 max-w-[22rem] rounded-2xl border border-sky-400/15 bg-sky-400/10 px-5 py-4 text-sm text-sky-100 shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                      <span class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-sky-300/40 bg-sky-300/10 text-xs font-semibold text-sky-200">
+                        {@tutorial.step_index}
+                      </span>
+
+                      <div>
+                        <div class="font-medium text-white">
+                          {@tutorial.title}
+                        </div>
+
+                        <div class="text-sky-100/80">
+                          {@tutorial.guidance}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      phx-click="dismiss-tutorial"
+                      class="btn btn-xs btn-ghost text-sky-100 hover:bg-sky-400/10"
+                    >
+                      Hide
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+
+              <%= if is_nil(@selected_citizen_id) do %>
+                <div class="absolute bottom-4 left-4 z-20 rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-sm text-zinc-400 backdrop-blur-md">
+                  Click a citizen to explore its process
+                </div>
+              <% end %>
+
+              <%= for citizen <- @world.citizens do %>
+                <.citizen
+                  citizen={citizen}
+                  selected={citizen.id == @selected_citizen_id}
+                  highlighted={
+                    Enum.any?(@world.messages, &(&1.from == citizen.id or &1.to == citizen.id))
+                  }
+                />
+              <% end %>
+
+              <%= for message <- @world.messages do %>
+                <.message
+                  message={message}
+                  citizens={@world.citizens}
+                />
+              <% end %>
             </div>
-  <% is_nil(@selected_citizen_id) -> %>
-            <div class="
-              mb-3
-              flex
-              items-center
-              justify-center
-              gap-2
-              text-sm
-              text-zinc-400
-            ">
-              <span class="
-                inline-flex
-                h-6
-                w-6
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-zinc-700
-                bg-zinc-900/60
-                text-xs
-                text-zinc-300
-              ">
-                ↖
-              </span>
+          </div>
 
-              <span>
-                Click a citizen to explore its process
-              </span>
+          <div class="lg:sticky lg:top-6">
+            <div class="rounded-[32px] border border-white/5 bg-white/5 p-6 backdrop-blur-xl shadow-[0_30px_80px_rgba(0,0,0,0.25)]">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                  <div class="h-2.5 w-2.5 rounded-full bg-sky-300"></div>
+
+                  <span class="text-xs uppercase tracking-[0.3em] text-zinc-400">
+                    Selected Citizen
+                  </span>
+                </div>
+
+                <div class="text-xs text-zinc-500">
+                  Live inspector
+                </div>
+              </div>
+
+              <%= if selected_citizen do %>
+                <div class="mt-4 text-2xl font-semibold text-white">
+                  Citizen {selected_citizen.id}
+                </div>
+
+                <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">State</span>
+                    <span>{selected_citizen.state}</span>
+                  </div>
+
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">Node</span>
+                    <span class={[
+                      "font-semibold capitalize",
+                      selected_citizen.node == :remote && "text-cyan-300",
+                      selected_citizen.node != :remote && "text-emerald-300"
+                    ]}>
+                      {selected_citizen.node}
+                    </span>
+                  </div>
+
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">Restarts</span>
+                    <span>{selected_citizen.generation - 1}</span>
+                  </div>
+
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">Running</span>
+                    <span class={[
+                      "font-semibold",
+                      selected_citizen.pid && Process.alive?(selected_citizen.pid) && "text-emerald-400",
+                      !(selected_citizen.pid && Process.alive?(selected_citizen.pid)) && "text-zinc-400"
+                    ]}>
+                      <%= if selected_citizen.pid && Process.alive?(selected_citizen.pid) do %>
+                        alive
+                      <% else %>
+                        restarting
+                      <% end %>
+                    </span>
+                  </div>
+
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">Energy</span>
+                    <span>{selected_citizen.energy}%</span>
+                  </div>
+                </div>
+
+                <div class="mt-3 text-xs font-mono text-zinc-500">
+                  PID {inspect(selected_citizen.pid)}
+                </div>
+
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                  <div class="rounded-2xl border border-white/5 bg-black/20 p-4">
+                    <div class="text-[11px] uppercase tracking-[0.35em] text-sky-300/80">
+                      Message Sending
+                    </div>
+
+                    <p class="mt-2 text-sm leading-6 text-zinc-300">
+                      Choose another citizen and send a message to watch the mailbox and animation update.
+                    </p>
+
+                    <%= if @message_form do %>
+                      <.form
+                        for={@message_form}
+                        id="message-playground-form"
+                        phx-change="set-recipient"
+                        phx-submit="send-message"
+                        class="mt-4 space-y-2"
+                      >
+                        <.input
+                          field={@message_form[:recipient_id]}
+                          type="select"
+                          label="Send Message"
+                          options={recipient_options(@world.citizens, @selected_citizen_id)}
+                          prompt="Choose a recipient"
+                        />
+
+                        <button
+                          type="submit"
+                          class="btn btn-sm btn-success w-full"
+                          disabled={@selected_citizen_id == nil}
+                        >
+                          Send
+                        </button>
+                      </.form>
+                    <% end %>
+                  </div>
+
+                  <div class="rounded-2xl border border-white/5 bg-black/20 p-4">
+                    <div class="text-[11px] uppercase tracking-[0.35em] text-amber-200/80">
+                      Process Crashing
+                    </div>
+
+                    <p class="mt-2 text-sm leading-6 text-zinc-300">
+                      Trigger a failure and let the supervisor bring the process back to life.
+                    </p>
+
+                    <div class="mt-4 grid gap-2">
+                      <button
+                        type="button"
+                        phx-click="crash-selected"
+                        class="btn btn-sm btn-error w-full"
+                        disabled={@selected_citizen_id == nil}
+                      >
+                        Crash Selected Citizen
+                      </button>
+
+                      <button
+                        type="button"
+                        phx-click="crash-random"
+                        class="btn btn-sm btn-outline btn-error w-full"
+                        disabled={@world.citizens == []}
+                      >
+                        Crash Random Citizen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              <% else %>
+                <div class="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-zinc-500">
+                  Select a citizen in the world above to inspect its private state and controls.
+                </div>
+              <% end %>
             </div>
-<% end %>
-        <div class="
-    world-stage
-    relative
-    h-[52vh]
-    min-h-[380px]
-    max-h-[680px]
-    lg:h-[calc(100vh-210px)]
-    w-full
-  ">
-          <div class="world-grid"></div>
-
-          <div class="world-vignette"></div>
-          
-<!-- Citizens -->
-          <%= for citizen <- @world.citizens do %>
-            <.citizen
-              citizen={citizen}
-              selected={citizen.id == @selected_citizen_id}
-              highlighted={
-                Enum.any?(@world.messages, &(&1.from == citizen.id or &1.to == citizen.id))
-              }
-            />
-          <% end %>
-          
-<!-- Messages -->
-          <%= for message <- @world.messages do %>
-            <.message
-              message={message}
-              citizens={@world.citizens}
-            />
-          <% end %>
+          </div>
         </div>
 
-</div>
-        
-<!-- Inspector -->
-        <div class="mt-8 lg:mt-0">
-          <.dashboard
-            world={@world}
-            citizen={selected_citizen}
-            message_form={@message_form}
-            selected_citizen_id={@selected_citizen_id}
-            recipient_options={recipient_options(@world.citizens, @selected_citizen_id)}
-            education_event={@education_event}
-            tutorial={@tutorial}
-            beam_lab_topic={@beam_lab_topic}
-          />
-        </div>
+        <.dashboard
+          world={@world}
+          citizen={selected_citizen}
+          education_event={@education_event}
+          beam_lab_topic={@beam_lab_topic}
+        />
       </div>
     </div>
   </div>
